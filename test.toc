@@ -1,0 +1,36 @@
+
+(add-ns rd (git-dependency "github.com:jduey/recursive-descent.git" "recursive-descent.toc"))
+(add-ns fr (git-dependency "github.com:jduey/free.git" "free.toc"))
+(add-ns h (module "http.toc"))
+
+(main [_]
+      ;; (map (seq "\t \"(),/:;<=>?@[]{}")
+      ;;      (fn [c]
+      ;;        (println c (char-code c))))
+      (let [parser (fr/evaluate h/request-message rd/recursive-descent)]
+        (println)
+        (println (parser {:input (list "GET / HTTP/1.0\n")}))
+        (println)
+        (println (parser {:input (list "GET /?queryonemptypath HTTP/1.0\n")}))
+        (println)
+        (println (parser {:input (list "POST /pub/WWW/TheProject.html?abspathquery HTTP/1.1\n"
+                                       "Host: poppy cock\n")}))
+        (println)
+        (println (parser {:input (list "PUT /pub/WWW/TheProject.html HTTP/1.1\n"
+                                       "Some-field:    bollocks\n"
+                                       " and more      bollocks\n")}))
+        (println)
+        (println (parser {:input (list "GET http://www.w3.org?thisisaquery HTTP/1.1\n")}))
+        (println)
+        (println (parser {:input (list "POST http://www.w3.org/pub/WWW/TheProject.html HTTP/1.1\n")}))
+        (println)
+        (println (parser {:input (list "PUT http://www.w3.org:8080/pub/WWW/TheProject.html HTTP/1.1\n")}))
+        (println)
+        (println (parser {:input (list "DELETE http://www.w3.org/pub/WWW/TheProject.html?bollocks HTTP/1.1\n")}))
+        (println)
+        (println (parser {:input (list "GET http://abc.com:80/~smith/home.html HTTP/1.1\n")}))
+        (println)
+        (println (parser {:input (list "GET http://ABC.com/%7Esmith/home.html HTTP/1.1\n")}))
+        (println)
+        (println (parser {:input (list "GET http://ABC.com:/%7esmith/home.html HTTP/1.1\n")}))
+        (println)))
