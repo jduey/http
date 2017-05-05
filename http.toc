@@ -7,30 +7,30 @@
 (def character (p/rule "char"
                        (p/char-range (char 0) (char 127))))
 (def ctl (p/rule "ctl"
-                 (comp (p/char-range (char 0) (char 31))
+                 (p/any (p/char-range (char 0) (char 31))
                        (p/term (char 127)))))
 (def cr (p/rule "cr" (p/term (char 13))))
 (def lf (p/rule "lf" (p/term (char 10))))
 (def sp (p/rule "sp" (p/term (char 32))))
 (def ht (p/rule "ht" (p/term (char 9))))
 (def dbl-quote (p/rule "<\">" (p/term (char 34))))
-(def crlf (p/rule "crlf" (comp cr lf)))
+(def crlf (p/rule "crlf" (p/any cr lf)))
 
 (def lws (p/rule "lws"
                  (p/all (p/optional crlf)
-                        (p/one-or-more (comp sp ht)))))
+                        (p/one-or-more (p/any sp ht)))))
 (def text (p/rule "text"
-                  (comp lws
+                  (p/any lws
                         (p/char-range (char 32) (char 126))
                         (p/char-range (char 128) (char 255)))))
 
 (def seperators (p/rule "seperators"
-                        (comp (p/one-of "()<>@,;:/[]?={}")
+                        (p/any (p/one-of "()<>@,;:/[]?={}")
                               dbl-quote
                               sp
                               ht)))
 (def token (p/rule "token"
-                   (map (p/one-or-more (comp (p/term (char 33))
+                   (map (p/one-or-more (p/any (p/term (char 33))
                                              (p/char-range (char 35) (char 39))
                                              (p/term (char 42))
                                              (p/term (char 43))
@@ -42,13 +42,13 @@
                                              (p/char-range (char 94) (char 122))
                                              (p/term (char 124))
                                              (p/term (char 126))))
-                        list-to-str)))
+                        to-str)))
 
 (def quoted-pair (p/rule "quoted-pair"
                          (apply-to list (p/term "\\") character)))
 
 (def qdtext (p/rule "qdtext"
-                    (comp lws
+                    (p/any lws
                           (p/char-range (char 35) (char 126))
                           (p/char-range (char 128) (char 255))
                           (p/char-range (char 32) (char 33)))))
@@ -56,19 +56,19 @@
 (def inner-comment (p/recurse "comment"))
 
 (def ctext (p/rule "text"
-                   (comp lws
+                   (p/any lws
                          (p/char-range (char 32) (char 39))
                          (p/char-range (char 42) (char 126))
                          (p/char-range (char 128) (char 255)))))
 
 (def comment (p/recursive-rule "comment"
                                (p/all (p/term "(")
-                                      (p/none-or-more (comp ctext quoted-pair inner-comment))
+                                      (p/none-or-more (p/any ctext quoted-pair inner-comment))
                                       (p/term ")"))))
 
 (def quoted-string (p/rule "quoted-string"
                            (p/all dbl-quote
-                                  (p/none-or-more (comp ctext quoted-pair comment)))))
+                                  (p/none-or-more (p/any ctext quoted-pair comment)))))
 
 (def http-version (p/rule "http-version"
                           (apply-to (fn [major minor]
@@ -79,7 +79,7 @@
                                     (p/ignore (p/term "."))
                                     (p/one-or-more p/digit))))
 
-(def method (map (comp (p/term "OPTIONS")
+(def method (map (p/any (p/term "OPTIONS")
                        (p/term "GET")
                        (p/term "HEAD")
                        (p/term "POST")
@@ -90,10 +90,10 @@
                  (partial hash-map :method)))
 
 (def request-uri (p/rule "request-uri"
-                         (comp (apply-to comp
+                         (p/any (apply-to comp
                                          (p/ignore (p/term "http://"))
                                          uri/hostport
-                                         (comp uri/abs-path
+                                         (p/any uri/abs-path
                                                (p/always {}))
                                          (p/optional uri/uri-query))
                                (apply-to comp
@@ -107,10 +107,10 @@
                             (p/ignore (p/term " "))
                             http-version))
 
-(def field-value (map (p/none-or-more (comp (map (p/one-or-more lws)
+(def field-value (map (p/none-or-more (p/any (map (p/one-or-more lws)
                                                  (constantly " "))
                                             text))
-                      list-to-str))
+                      to-str))
 
 (def message-header (p/all token
                            (p/ignore (p/term ":"))
