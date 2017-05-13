@@ -126,3 +126,10 @@
                                     (fn [headers]
                                       {:headers (apply hash-map (flatten headers))}))
                                (p/ignore crlf)))
+
+
+(defn response
+  ([code message]
+   ["HTTP/1.1 " (str code) " " message "\n\n"])
+  ([code message & rest-of-stuff]
+   ["HTTP/1.1 " (str code) " " message "\n\n" rest-of-stuff "\n\n"]))
