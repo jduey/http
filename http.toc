@@ -127,9 +127,21 @@
                                       {:headers (apply hash-map (flatten headers))}))
                                (p/ignore crlf)))
 
+(defprotocol Headers
+  (content-type [_] ""))
+
+(def header-tags
+  {"Content-Type" content-type})
 
 (defn response
   ([code message]
    ["HTTP/1.1 " (str code) " " message "\n\n"])
-  ([code message & rest-of-stuff]
-   ["HTTP/1.1 " (str code) " " message "\n\n" rest-of-stuff "\n\n"]))
+  ([code message body]
+   (let [headers (flat-map (seq header-tags)
+                           (fn [[tag f]]
+                             (let [val (f body)]
+                               (extract (or (= "" val)
+                                            (maybe (list tag ": " val "\n")))))))]
+     ["HTTP/1.1 " (str code) " " message "\n"
+      (apply str headers) "\n"
+      body "\n\n"])))
